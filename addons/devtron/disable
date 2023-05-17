@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+set -e
+
+source $SNAP/actions/common/utils.sh
+
+NAMESPACE_DEVTRON="devtroncd"
+
+KUBECTL="$SNAP/microk8s-kubectl.wrapper"
+HELM="$SNAP/microk8s-helm3.wrapper"
+KUBECTL_DELETE_ARGS="--wait=true --timeout=180s --ignore-not-found=true"
+
+PURGE=false
+# get the options
+while getopts ":p" flag; do
+  case "${flag}" in
+          p) PURGE=true
+             ;;
+          *) echo "Usage: microk8s disable devtron [-p]"
+             echo ""
+             echo "WARNING: Final deletion of \"$NAMESPACE_DEVTRON\" namespace must be enforced by: \"microk8s disable devtron -p\""
+             echo ""
+             echo "Purge only when sure, that \"$NAMESPACE_DEVTRON\" namespace is not hosting any other services from Devtron stack."
+             echo ""
+             exit 0
+             ;;
+  esac
+done
+
+echo "Disabling Devtron"
+
+$HELM uninstall devtron --namespace $NAMESPACE_DEVTRON
+
+if $PURGE; then
+    echo "Final \"$NAMESPACE_DEVTRON\" namespace deletion"
+    $KUBECTL delete --namespace $NAMESPACE_DEVTRON -f https://raw.githubusercontent.com/devtron-labs/charts/main/charts/devtron/crds/crd-devtron.yaml
+    $KUBECTL delete $KUBECTL_DELETE_ARGS namespace "$NAMESPACE_DEVTRON" devtroncd devtron-cd devtron-ci devtron-demo argo 
+    
+else
+    echo ""
+    echo "WARNING: Final deletion of \"$NAMESPACE_DEVTRON\" namespace must be enforced by: \"microk8s disable devtron -p\""
+    echo ""
+    echo "Purge only when sure, that \"$NAMESPACE_DEVTRON\" namespace is not hosting any other services from devtron stack."
+    echo ""
+fi
+
+echo "Devtron disabled"

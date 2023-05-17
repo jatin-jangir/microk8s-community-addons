@@ -206,3 +206,11 @@ microk8s-addons:
       supported_architectures:
         - amd64
         - arm64
+
+    - name: "devtron"
+      description: "The Open-Source Kubernetes-native Application management Platform."
+      version: "0.6.15"
+      check_status: "deployment.apps/devtron"
+      supported_architectures:
+        - amd64
+        - arm64
